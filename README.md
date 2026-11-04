@@ -10,6 +10,8 @@ Predicate logic practice app for PHIL 270 Symbolic Logic. Built in the style of 
 - **Part 3, All, no, and some**: symbolize A-, E-, I-, and O-sentences, including "only" and "all and only" (any equivalent formula is accepted)
 - Quick-check questions for each part and a mixed review
 
+Students enter the class code before they can use the app; it is remembered in their browser after the first time.
+
 Exercises are generated fresh each time. Progress is saved only in each student's own browser.
 
 ## Use

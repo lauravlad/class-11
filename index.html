@@ -109,6 +109,11 @@ select{font:inherit;padding:8px 10px;border-radius:8px;border:1.5px solid var(--
 .fb ul{margin:6px 0 0;padding-left:1.2em}
 .fb li{margin:3px 0}
 .next{margin-top:30px;display:flex;justify-content:flex-end}
+.lock{max-width:360px;margin:12vh auto 0;text-align:center;display:grid;gap:8px;justify-items:center}
+.code-form{display:grid;gap:8px;width:100%;margin-top:8px;text-align:left}
+.code-form .btn{justify-self:stretch}
+.code-err{color:var(--bad);font-size:.95rem;margin:0}
+input[aria-invalid="true"]{border-color:var(--bad)}
 /* Candy Challenge */
 .candy-cta{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--accent);color:var(--accent-ink);border:0;border-radius:14px;padding:16px;margin-top:22px}
 .candy-cta b{font-family:var(--serif);font-size:1.25rem;display:block}
@@ -739,7 +744,34 @@ app.addEventListener('change', ev=>{
   }
   if(view==='cat' && t.dataset.b){ const k=t.dataset.b; ex.b[k]=['on','n1','n2'].includes(k)?+t.value:t.value; if(ex.result&&!ex.result.ok) ex.result=null; render(); document.getElementById('cat-'+k)?.focus(); }
 });
+// ===== Class code =====
+const CLASS_CODE='class11';
+const normCode = v => String(v||'').toLowerCase().replace(/\s+/g,'');
+let unlocked=false; try{ unlocked = localStorage.getItem('class11-unlocked')==='yes'; }catch(e){}
+let codeError=false;
+VIEWS.lock = () => `
+  <div class="lock">
+    <div class="big-candy" aria-hidden="true">🔒</div>
+    <h1>Class 11</h1>
+    <p class="muted">Enter the class code your teacher gave you.</p>
+    <form id="code-form" class="code-form" novalidate>
+      <label for="class-code" class="hint">Class code</label>
+      <input type="text" id="class-code" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30" ${codeError?'aria-invalid="true" aria-describedby="code-err"':''}>
+      ${codeError?`<p class="code-err" id="code-err" role="alert">That code isn’t right. Check with your teacher and try again.</p>`:''}
+      <button class="btn big" type="submit">Enter</button>
+    </form>
+  </div>`;
+app.addEventListener('submit', ev=>{
+  if(ev.target.id!=='code-form') return;
+  ev.preventDefault();
+  if(normCode(document.getElementById('class-code').value)===CLASS_CODE){
+    unlocked=true; codeError=false; try{ localStorage.setItem('class11-unlocked','yes'); }catch(e){}
+    go('home');
+  } else { codeError=true; render(); document.getElementById('class-code')?.focus(); }
+});
+if(!unlocked) view='lock';
 render();
+if(!unlocked) document.getElementById('class-code')?.focus();
 </script>
 </body>
 </html>
