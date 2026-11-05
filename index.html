@@ -14,6 +14,10 @@
   --accent:#3442A6; --accent-ink:#FFFFFF;
   --good:#1D7550; --good-tint:#E3F3EB; --bad:#B42318; --bad-bg:#FBE9E7;
   --soft:#ECEEF7;
+  --mast:#262D72; --mast-ink:#FFFFFF; --mast-sym:rgba(255,255,255,.09); --mast-muted:rgba(255,255,255,.78);
+  --candy:#D93A6E; --candy-ink:#FFFFFF; --candy-2:#FFE6EE;
+  --p1:#0D7F73; --p1-soft:#DCF2EE; --p2:#A86400; --p2-soft:#FAEDD6; --p3:#B8365F; --p3-soft:#FAE1EA; --p4:#3442A6; --p4-soft:#E6E9F8;
+  --page-sym:rgba(52,66,166,.07);
   --serif:'Literata', Georgia, 'Times New Roman', serif;
   --sans:'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   --logic:'STIX Two Text', 'Cambria Math', 'Times New Roman', serif;
@@ -28,6 +32,10 @@
     --accent:#8F9CFF; --accent-ink:#11132A;
     --good:#5FCB9C; --good-tint:#16352B; --bad:#FF8F84; --bad-bg:#3A1E22;
     --soft:#232747; color-scheme: dark;
+    --mast:#2B327F; --mast-ink:#FFFFFF; --mast-sym:rgba(255,255,255,.08); --mast-muted:rgba(255,255,255,.75);
+    --candy:#FF5C90; --candy-ink:#1A0A12; --candy-2:#3D1A28;
+    --p1:#56D3C3; --p1-soft:#14322E; --p2:#F2B54B; --p2-soft:#382B12; --p3:#FF8FB3; --p3-soft:#3B1A27; --p4:#8F9CFF; --p4-soft:#232747;
+    --page-sym:rgba(143,156,255,.07);
   }
 }
 :root[data-theme="dark"]{
@@ -35,6 +43,10 @@
   --accent:#8F9CFF; --accent-ink:#11132A;
   --good:#5FCB9C; --good-tint:#16352B; --bad:#FF8F84; --bad-bg:#3A1E22;
   --soft:#232747; color-scheme: dark;
+    --mast:#2B327F; --mast-ink:#FFFFFF; --mast-sym:rgba(255,255,255,.08); --mast-muted:rgba(255,255,255,.75);
+    --candy:#FF5C90; --candy-ink:#1A0A12; --candy-2:#3D1A28;
+    --p1:#56D3C3; --p1-soft:#14322E; --p2:#F2B54B; --p2-soft:#382B12; --p3:#FF8FB3; --p3-soft:#3B1A27; --p4:#8F9CFF; --p4-soft:#232747;
+    --page-sym:rgba(143,156,255,.07);
 }
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-tap-highlight-color:transparent}
@@ -109,13 +121,48 @@ select{font:inherit;padding:8px 10px;border-radius:8px;border:1.5px solid var(--
 .fb ul{margin:6px 0 0;padding-left:1.2em}
 .fb li{margin:3px 0}
 .next{margin-top:30px;display:flex;justify-content:flex-end}
-.lock{max-width:360px;margin:12vh auto 0;text-align:center;display:grid;gap:8px;justify-items:center}
+/* Front screens */
+.syms{position:absolute;inset:0;overflow:hidden;pointer-events:none;font-family:var(--logic);user-select:none}
+.syms span{position:absolute;line-height:1;transform:rotate(var(--r))}
+.page-syms{position:fixed;z-index:0;color:var(--page-sym)}
+.lock{position:relative;z-index:1;max-width:400px;margin:9vh auto 0;text-align:center;display:grid;gap:10px;justify-items:center;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:30px 24px 26px;box-shadow:0 18px 50px -24px rgba(28,33,66,.35)}
+.lock .tile{width:76px;height:76px;margin-top:-68px;border-radius:20px;background:var(--mast);color:var(--mast-ink);display:grid;place-items:center;font-family:var(--logic);font-size:34px;box-shadow:0 10px 24px -10px rgba(38,45,114,.6)}
+.lock h1{font-size:2.5rem;margin-top:6px}
+.lock .sub{color:var(--muted);margin:0}
+.lock .code-form{margin-top:10px;text-align:center}
+.t-ico.small{font-size:.95rem}
+.lock input[type=text]{text-align:center;font-size:1.3rem;letter-spacing:.18em;padding:14px 12px;font-family:var(--logic)}
+.lock .chip{display:inline-flex;gap:6px;align-items:center;font-size:.85rem;color:var(--candy);background:var(--candy-2);border-radius:999px;padding:4px 12px;font-weight:700}
+.mast{position:relative;overflow:hidden;background:var(--mast);color:var(--mast-ink);border-radius:24px;padding:30px 24px 24px;margin-top:4px}
+.mast .syms{color:var(--mast-sym)}
+.mast > *:not(.syms){position:relative}
+.kicker{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mast-muted);margin:0;font-weight:700}
+.mast h1{font-size:clamp(2.6rem,9vw,3.6rem);letter-spacing:-.02em;margin-top:6px;color:var(--mast-ink)}
+.mast h1 .f{font-size:.8em;opacity:.55;margin-left:.15em}
+.mast-tag{color:var(--mast-muted);font-size:1.08rem;margin:.3em 0 0;max-width:34ch}
+.mast .candy-cta{margin-top:22px}
+.part-head{display:flex;align-items:center;gap:12px}
+.part-badge{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--pc);color:var(--surface);font-family:var(--serif);font-weight:600;font-size:1rem}
+.part-head h2{font-size:1.3rem}
+.part-head .level-num{margin-left:auto}
+.level{--pc:var(--p4);--pcs:var(--p4-soft)}
+.level.part-1{--pc:var(--p1);--pcs:var(--p1-soft)}
+.level.part-2{--pc:var(--p2);--pcs:var(--p2-soft)}
+.level.part-3{--pc:var(--p3);--pcs:var(--p3-soft)}
+.levels .topic{border-color:var(--line);display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;padding:12px 14px 12px 12px;transition:border-color .15s, transform .15s}
+.levels .topic:hover{border-color:var(--pc);background:var(--surface);transform:translateY(-1px)}
+.t-ico{width:44px;height:44px;border-radius:12px;background:var(--pcs);color:var(--pc);display:grid;place-items:center;font-family:var(--logic);font-size:1.25rem;font-weight:600}
+.levels .go{color:var(--pc)}
+@media (prefers-reduced-motion:reduce){ .levels .topic{transition:none} .levels .topic:hover{transform:none} }
 .code-form{display:grid;gap:8px;width:100%;margin-top:8px;text-align:left}
 .code-form .btn{justify-self:stretch}
 .code-err{color:var(--bad);font-size:.95rem;margin:0}
 input[aria-invalid="true"]{border-color:var(--bad)}
 /* Candy Challenge */
-.candy-cta{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--accent);color:var(--accent-ink);border:0;border-radius:14px;padding:16px;margin-top:22px}
+.candy-cta{position:relative;overflow:hidden;display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--candy);color:var(--candy-ink);border:0;border-radius:16px;padding:18px 16px 16px;margin-top:22px;box-shadow:0 10px 24px -12px rgba(0,0,0,.45)}
+.candy-cta::before{content:"";position:absolute;inset:0 0 auto;height:6px;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.85) 0 8px,transparent 8px 16px)}
+.candy-cta:hover{filter:brightness(1.06)}
+.candy-cta .go-light{background:var(--candy-ink);color:var(--candy);border-radius:999px;padding:6px 14px}
 .candy-cta b{font-family:var(--serif);font-size:1.25rem;display:block}
 .candy-cta small{display:block;opacity:.88;font-size:.9rem}
 .candy-ico{font-size:2.2rem;line-height:1}
@@ -331,32 +378,40 @@ const head = (title,id) => game ? gameBar(title) : `<div class="ex-head"><h2>${t
 const nextBtn = label => `<div class="next"><button class="btn" data-act="next">${game ? (game.answered ? (game.i+1<game.items.length?'Next question':'See my score') : 'Skip') : label}</button></div>`;
 const fb = (ok,title,body='') => `<div class="fb ${ok?'good':'bad'}" role="status"><strong>${title}</strong>${body}</div>`;
 
+// ===== Decorative symbol layer (seeded so it stays put between renders) =====
+function symLayer(n, seed, cls){
+  let x=seed; const rnd=()=>((x=(x*16807)%2147483647)/2147483647);
+  const G=['∀','∃','⊃','≡','~','&','∨','x','y','F','(∀x)','(∃y)'];
+  let out='';
+  for(let i=0;i<n;i++) out+=`<span style="left:${(rnd()*100).toFixed(1)}%;top:${(rnd()*100).toFixed(1)}%;font-size:${(18+rnd()*46).toFixed(0)}px;--r:${(rnd()*40-20).toFixed(0)}deg">${esc(G[Math.floor(rnd()*G.length)])}</span>`;
+  return `<div class="syms ${cls||''}" aria-hidden="true">${out}</div>`;
+}
+
 // ===== Home =====
 VIEWS.home = () => {
-  const t=(go,arg,name,sub,id,verb='Practice')=>`<li><button class="topic" data-go="${go}" ${arg?`data-arg="${arg}"`:''}><span>${name}<small>${sub}${soFar(id)}</small></span><span class="go">${verb}</span></button></li>`;
-  const icon=`<svg viewBox="0 0 84 84" aria-hidden="true"><rect x="2" y="2" width="80" height="80" rx="18" style="fill:var(--accent)"/><text x="42" y="56" text-anchor="middle" style="fill:var(--accent-ink);font-family:var(--logic);font-size:40px">∀∃</text></svg>`;
+  const t=(go,arg,ico,name,sub,id,verb='Practice')=>`<li><button class="topic" data-go="${go}" ${arg?`data-arg="${arg}"`:''}><span class="t-ico${ico.length>2?' small':''}" aria-hidden="true">${esc(ico)}</span><span>${name}<small>${sub}${soFar(id)}</small></span><span class="go">${verb} →</span></button></li>`;
+  const part=(n,title,items)=>`<li class="level part-${n}"><div class="part-head"><span class="part-badge" aria-hidden="true">${n}</span><h2>${title}</h2><span class="level-num">Part ${n}</span></div><ul class="topics">${items}</ul></li>`;
   return `
-  <div class="hero">${icon}<div><h1>Class 11</h1><p class="tagline">Predicate logic: names, predicates, quantifiers, and symbolizing English. Practice one step at a time, with feedback on every answer.</p></div></div>
-  <button class="candy-cta" data-go="gameStart"><span class="candy-ico" aria-hidden="true">🍬</span><span><b>Candy Challenge</b><small>10 questions from every part. Get 8 or more right to earn candy.${progress.candy?` You’ve earned candy ${progress.candy} ${progress.candy===1?'time':'times'}.`:''}</small></span><span class="go-light">Play</span></button>
+  <header class="mast">
+    ${symLayer(16, 7)}
+    <p class="kicker">PHIL 270 · Symbolic Logic</p>
+    <h1>Class 11<span class="f" aria-hidden="true">∀∃</span></h1>
+    <p class="mast-tag">Predicate logic, one step at a time, with feedback on every answer.</p>
+    <button class="candy-cta" data-go="gameStart"><span class="candy-ico" aria-hidden="true">🍬</span><span><b>Candy Challenge</b><small>10 questions from every part. Get 8 or more right to earn candy.${progress.candy?` You’ve earned candy ${progress.candy} ${progress.candy===1?'time':'times'}.`:''}</small></span><span class="go-light">Play</span></button>
+  </header>
   <ol class="levels">
-    <li class="level"><div class="level-head"><h2>${SECTIONS['p1']}</h2><span class="level-num">Part 1</span></div>
-      <ul class="topics">
-        ${t('name','','Name the expression','Singular terms, quantity expressions, and predicate places','name')}
-        ${t('qc','p1','Quick check','Short questions on part 1','qc-p1','Start')}
-      </ul></li>
-    <li class="level"><div class="level-head"><h2>${SECTIONS['p2']}</h2><span class="level-num">Part 2</span></div>
-      <ul class="topics">
-        ${t('read','','Read a formula','Type, main operator, free variables, sentence or not','read')}
-        ${t('sub','','Substitution instances','Drop the initial quantifier, one constant throughout','sub')}
-        ${t('qc','p2','Quick check','Short questions on part 2','qc-p2','Start')}
-      </ul></li>
-    <li class="level"><div class="level-head"><h2>${SECTIONS['p3']}</h2><span class="level-num">Part 3</span></div>
-      <ul class="topics">
-        ${t('cat','','Symbolize a sentence','Name the form, then build the formula','cat')}
-        ${t('qc','p3','Quick check','Short questions on part 3','qc-p3','Start')}
-      </ul></li>
-    <li class="level"><div class="level-head"><h2>Review</h2><span class="level-num">Parts 1–3</span></div>
-      <ul class="topics">${t('qc','all','Mixed quick check','Questions from every section, shuffled','qc-all','Start')}</ul></li>
+    ${part(1, SECTIONS['p1'],
+      t('name','','Aa','Name the expression','Singular terms, quantity words, and predicate places','name')+
+      t('qc','p1','?','Quick check','Short questions on part 1','qc-p1','Start'))}
+    ${part(2, SECTIONS['p2'],
+      t('read','','⊃','Read a formula','Type, main operator, free variables, sentence or not','read')+
+      t('sub','','x→a','Substitution instances','Drop the first quantifier, one constant throughout','sub')+
+      t('qc','p2','?','Quick check','Short questions on part 2','qc-p2','Start'))}
+    ${part(3, SECTIONS['p3'],
+      t('cat','','∀','Symbolize a sentence','Name the form, then build the formula','cat')+
+      t('qc','p3','?','Quick check','Short questions on part 3','qc-p3','Start'))}
+    <li class="level"><div class="part-head"><span class="part-badge" aria-hidden="true">★</span><h2>Review</h2><span class="level-num">Parts 1–3</span></div>
+      <ul class="topics">${t('qc','all','★','Mixed quick check','Questions from every part, shuffled','qc-all','Start')}</ul></li>
   </ol>`;
 };
 
@@ -750,16 +805,18 @@ const normCode = v => String(v||'').toLowerCase().replace(/\s+/g,'');
 let unlocked=false; try{ unlocked = localStorage.getItem('class11-unlocked')==='yes'; }catch(e){}
 let codeError=false;
 VIEWS.lock = () => `
+  ${symLayer(26, 11, 'page-syms')}
   <div class="lock">
-    <div class="big-candy" aria-hidden="true">🔒</div>
+    <div class="tile" aria-hidden="true">∀∃</div>
     <h1>Class 11</h1>
-    <p class="muted">Enter the class code your teacher gave you.</p>
+    <p class="sub">Predicate logic practice for PHIL 270.</p>
     <form id="code-form" class="code-form" novalidate>
-      <label for="class-code" class="hint">Class code</label>
-      <input type="text" id="class-code" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30" ${codeError?'aria-invalid="true" aria-describedby="code-err"':''}>
+      <label for="class-code" class="hint">Enter the class code your teacher gave you</label>
+      <input type="text" id="class-code" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30" placeholder="• • • • • • •" ${codeError?'aria-invalid="true" aria-describedby="code-err"':''}>
       ${codeError?`<p class="code-err" id="code-err" role="alert">That code isn’t right. Check with your teacher and try again.</p>`:''}
       <button class="btn big" type="submit">Enter</button>
     </form>
+    <span class="chip"><span aria-hidden="true">🍬</span> Candy Challenge inside</span>
   </div>`;
 app.addEventListener('submit', ev=>{
   if(ev.target.id!=='code-form') return;
