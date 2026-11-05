@@ -195,14 +195,21 @@ input[type=text]:focus-visible{outline:3px solid var(--accent);outline-offset:2p
 @media (prefers-reduced-motion:reduce){ .rain{display:none} .bounce{animation:none} }
 @media (max-width:420px){ h1{font-size:2rem} .prop{font-size:1.25rem} .formula{font-size:1.35rem} .choices{grid-template-columns:1fr} .choices.three{grid-template-columns:repeat(3,minmax(0,1fr))} }
 @media (prefers-reduced-motion:no-preference){ .fb{animation:pop .18s ease-out} @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}} }
+.gclock{font-variant-numeric:tabular-nums;font-weight:700}
+.gclock.low{color:var(--bad, #c0392b)}
+.exnum{margin:-.4rem 0 .8rem;font-weight:600}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <script>
 // ===== Helpers =====
-const pick = a => a[Math.floor(Math.random()*a.length)];
-const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; };
+// Seeded randomness: every student sees the exact same exercises, in the same order.
+let R=Math.random;
+function seeded(key){ let h=2166136261; for(const c of key){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); } let x=h>>>0; return ()=>{ x=(x+0x6D2B79F5)|0; let t=Math.imul(x^x>>>15,1|x); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function withSeed(key,fn){ const old=R; R=seeded(key); try{ return fn(); } finally{ R=old; } }
+const pick = a => a[Math.floor(R()*a.length)];
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(R()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; };
 const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const F = s => `<span class="f">${esc(s)}</span>`;
 // Text with {formula} markers
@@ -241,12 +248,12 @@ function quants(n,acc=[]){ if(n.t==='q'){acc.push(n); quants(n.a,acc);} else if(
 const typeOf = n => n.t==='atom'?'Atomic':n.t==='q'?'Quantified':'Truth-functional';
 
 function genAtom(scope){
-  const two=Math.random()<0.3, p=two?pick(['R','L']):pick(['F','G','H']), args=[];
-  for(let i=0;i<(two?2:1);i++){ const r=Math.random(); if(r<0.35) args.push(pick(CONSTS.slice(0,3))); else if(scope.length&&r<0.88) args.push(pick(scope)); else args.push(pick(VARS)); }
+  const two=R()<0.3, p=two?pick(['R','L']):pick(['F','G','H']), args=[];
+  for(let i=0;i<(two?2:1);i++){ const r=R(); if(r<0.35) args.push(pick(CONSTS.slice(0,3))); else if(scope.length&&r<0.88) args.push(pick(scope)); else args.push(pick(VARS)); }
   return At(p,...args);
 }
 function gen(d,scope){
-  const r=Math.random();
+  const r=R();
   if(d<=0||r<0.2) return genAtom(scope);
   if(r<0.36) return Ng(gen(d-1,scope));
   if(r<0.68) return Bn(pick(['&','∨','⊃','≡']),gen(d-1,scope),gen(d-1,scope));
@@ -371,11 +378,15 @@ const app=document.getElementById('app');
 const VIEWS={};
 function render(){ app.innerHTML=VIEWS[view](); }
 function go(v,arg){ view=v; ex=NEW[v]?NEW[v](arg):null; render(); window.scrollTo(0,0); }
+// Fixed class set: how many exercises each activity has. Same for everyone.
+const SET={name:5, read:3, sub:3, cat:5};
+const ACT_NAME={name:'Name the expression',read:'Read a formula',sub:'Substitution instances',cat:'Symbolize a sentence',qc:'Quick check'};
+const isLast = () => SET[view] ? ex.k+1>=SET[view] : (view==='qc' && ex.i+1>=ex.order.length);
 const NEW={};
 // Inside a Candy Challenge round, the back link quits the round instead.
 const backHome = { toString(){ return game ? `<button class="back" data-act="quit-game">‹ Quit round</button>` : `<button class="back" data-go="home">‹ All sections</button>`; } };
-const head = (title,id) => game ? gameBar(title) : `<div class="ex-head"><h2>${title}</h2><span class="score">${sc(id)}</span></div>`;
-const nextBtn = label => `<div class="next"><button class="btn" data-act="next">${game ? (game.answered ? (game.i+1<game.items.length?'Next question':'See my score') : 'Skip') : label}</button></div>`;
+const head = (title,id) => game ? gameBar(title) : `<div class="ex-head"><h2>${title}</h2><span class="score">${sc(id)}</span></div>${SET[view]?`<p class="muted exnum">Exercise ${ex.k+1} of ${SET[view]}</p>`:''}`;
+const nextBtn = label => `<div class="next"><button class="btn" data-act="next">${game ? (game.answered ? (game.i+1<game.items.length?'Next question':'See my score') : 'Skip') : (isLast()?'Finish':label)}</button></div>`;
 const fb = (ok,title,body='') => `<div class="fb ${ok?'good':'bad'}" role="status"><strong>${title}</strong>${body}</div>`;
 
 // ===== Decorative symbol layer (seeded so it stays put between renders) =====
@@ -396,28 +407,33 @@ VIEWS.home = () => {
     ${symLayer(16, 7)}
     <p class="kicker">PHIL 270 · Symbolic Logic</p>
     <h1>Class 11<span class="f" aria-hidden="true">∀∃</span></h1>
-    <p class="mast-tag">Predicate logic, one step at a time, with feedback on every answer.</p>
-    <button class="candy-cta" data-go="gameStart"><span class="candy-ico" aria-hidden="true">🍬</span><span><b>Candy Challenge</b><small>10 questions from every part. Get 8 or more right to earn candy.${progress.candy?` You’ve earned candy ${progress.candy} ${progress.candy===1?'time':'times'}.`:''}</small></span><span class="go-light">Play</span></button>
+    <p class="mast-tag">One class hour: about 45 minutes of practice, then the Candy Challenge. Everyone gets the same exercises, so we can work through them together.</p>
+    <button class="candy-cta" data-go="gameStart"><span class="candy-ico" aria-hidden="true">🍬</span><span><b>Candy Challenge</b><small>10 questions, ${GAME_MIN} minutes. Get 8 or more right to earn candy.${progress.candy?` You’ve earned candy ${progress.candy} ${progress.candy===1?'time':'times'}.`:''}</small></span><span class="go-light">Play</span></button>
   </header>
   <ol class="levels">
     ${part(1, SECTIONS['p1'],
-      t('name','','Aa','Name the expression','Singular terms, quantity words, and predicate places','name')+
-      t('qc','p1','?','Quick check','Short questions on part 1','qc-p1','Start'))}
+      t('name','','Aa','Name the expression',`${SET.name} exercises · singular terms, quantity words, predicate places`,'name','Start')+
+      t('qc','p1','?','Quick check','4 questions on part 1','qc-p1','Start'))}
     ${part(2, SECTIONS['p2'],
-      t('read','','⊃','Read a formula','Type, main operator, free variables, sentence or not','read')+
-      t('sub','','x→a','Substitution instances','Drop the first quantifier, one constant throughout','sub')+
-      t('qc','p2','?','Quick check','Short questions on part 2','qc-p2','Start'))}
+      t('read','','⊃','Read a formula',`${SET.read} exercises · type, main operator, free variables`,'read','Start')+
+      t('sub','','x→a','Substitution instances',`${SET.sub} exercises · drop the first quantifier, one constant throughout`,'sub','Start')+
+      t('qc','p2','?','Quick check','5 questions on part 2','qc-p2','Start'))}
     ${part(3, SECTIONS['p3'],
-      t('cat','','∀','Symbolize a sentence','Name the form, then build the formula','cat')+
-      t('qc','p3','?','Quick check','Short questions on part 3','qc-p3','Start'))}
-    <li class="level"><div class="part-head"><span class="part-badge" aria-hidden="true">★</span><h2>Review</h2><span class="level-num">Parts 1–3</span></div>
-      <ul class="topics">${t('qc','all','★','Mixed quick check','Questions from every part, shuffled','qc-all','Start')}</ul></li>
+      t('cat','','∀','Symbolize a sentence',`${SET.cat} exercises · name the form, then build the formula`,'cat','Start')+
+      t('qc','p3','?','Quick check','5 questions on part 3','qc-p3','Start'))}
   </ol>`;
 };
 
 // ===== Name the expression =====
-NEW.name = () => {
-  if(Math.random()<0.35){ const [p,n]=pick(PLACE_BANK); return {mode:'place', p, n, pickd:null}; }
+// Class set: definite description, quantity expression, pronoun, none of these.
+const NAME_PLAN=[6,4,2,5];
+NEW.name = (k=-1) => {
+  // Class set: 3 "what kind of expression" items, then 1 predicate-places item.
+  if(k>=0){
+    if(k===SET.name-1){ const [p,n]=PLACE_BANK[2]; return {mode:'place', p, n, pickd:null}; }
+    return {mode:'kind', item:NAME_BANK[NAME_PLAN[k]], pickd:null};
+  }
+  if(R()<0.35){ const [p,n]=pick(PLACE_BANK); return {mode:'place', p, n, pickd:null}; }
   return {mode:'kind', item:pick(NAME_BANK), pickd:null};
 };
 VIEWS.name = () => {
@@ -445,13 +461,20 @@ VIEWS.name = () => {
 };
 
 // ===== Read a formula =====
-NEW.read = () => {
-  const wantSentence=Math.random()<0.5;
+// Class set: quantified with a free variable; truth-functional with a free variable; a negated sentence.
+const READ_SET=()=>[
+  Qf('∀','x',Bn('∨',At('F','x'),At('G','y'))),
+  Bn('&',Qf('∃','y',At('F','y')),At('G','x')),
+  Ng(Qf('∀','x',Bn('⊃',At('F','x'),Qf('∃','y',At('R','x','y'))))),
+];
+NEW.read = (k=-1) => {
+  if(k>=0){ const f=READ_SET()[k]; return {f, toks:tokens(f), type:null, main:null, free:new Set(), freeChecked:false, sent:null, done:false}; }
+  const wantSentence=R()<0.5;
   let f;
   for(let i=0;i<400;i++){
     f=gen(3,[]); const s=str(f);
     if(s.length<5||s.length>32) continue;
-    if(f.t==='atom'&&Math.random()<0.85) continue;
+    if(f.t==='atom'&&R()<0.85) continue;
     if((freeCount(f)===0)!==wantSentence) continue;
     break;
   }
@@ -527,8 +550,8 @@ NEW.sub = () => {
     const root=Qf(pick(['∀','∃']),v,body);
     if(freeCount(root)>0) continue;
     const s=str(root); if(s.length>30||s.length<6) continue;
-    if(occ<2 && body.t!=='q' && Math.random()<0.7) continue;
-    const negate=Math.random()<0.18;
+    if(occ<2 && body.t!=='q' && R()<0.7) continue;
+    const negate=R()<0.18;
     const [c1,c2]=shuffle(CONSTS).slice(0,2);
     const qs=`(${root.q}${v})`;
     const cands=[];
@@ -541,7 +564,7 @@ NEW.sub = () => {
     }
     if(body.t==='q') wrongs.push([subst(subst(body.a,body.v,()=>c2),v,()=>c1), `This drops two quantifiers. Only the initial one goes.`]);
     wrongs.push([Qf(root.q,v,subst(body,v,()=>c1)), `The initial quantifier has to be dropped. Keeping it leaves a quantifier with no ${v} to bind.`]);
-    if(Math.random()<0.5) add(subst(body,v,()=>c2), true, `Drop ${qs} and replace every ${v} with ${c2}. Any constant works if it is used throughout.`);
+    if(R()<0.5) add(subst(body,v,()=>c2), true, `Drop ${qs} and replace every ${v} with ${c2}. Any constant works if it is used throughout.`);
     shuffle(wrongs).forEach(([n,w])=>{ if(cands.length<4) add(n,false,w); });
     if(cands.length<3) continue;
     const shown = negate ? Ng(root) : root;
@@ -573,8 +596,11 @@ VIEWS.sub = () => {
 };
 
 // ===== Symbolize a sentence =====
-NEW.cat = () => {
-  const t=pick(CAT_TERMS), flip=Math.random()<0.5, f=flip?t.b:t.a, g=flip?t.a:t.b, tpl=pick(CAT_T);
+// Class set covers A, E, I, O, and 'only': Every…, No…, Some…, Not all…, Only…
+const CAT_PLAN=[{tpl:1,t:2,flip:false},{tpl:3,t:3,flip:false},{tpl:8,t:5,flip:false},{tpl:11,t:4,flip:false},{tpl:13,t:7,flip:true}];
+NEW.cat = (k=-1) => {
+  const P=k>=0?CAT_PLAN[k]:null;
+  const t=P?CAT_TERMS[P.t]:pick(CAT_TERMS), flip=P?P.flip:R()<0.5, f=flip?t.b:t.a, g=flip?t.a:t.b, tpl=P?CAT_T[P.tpl]:pick(CAT_T);
   return {t,f,g,tpl,text:tpl.say(f,g,t),form:null,b:{on:0,q:'',n1:0,p1:'',c:'',n2:0,p2:''},checked:false,counted:false,result:null};
 };
 const catStr = (st,e) => {
@@ -624,11 +650,16 @@ VIEWS.cat = () => {
 // ===== Quick check =====
 NEW.qc = (sec) => {
   const pool = QC.map((_,i)=>i).filter(i=>sec==='all'||QC[i].s===sec);
-  return {sec, order:shuffle(pool), i:0, opt:null, pickd:null};
+  return {sec, order:withSeed('qc-'+sec,()=>shuffle(pool)), i:0, opt:null, pickd:null};
 };
+// Wrap the generated activities so exercise k is the same for every student.
+for(const v of Object.keys(SET)){
+  const raw=NEW[v];
+  NEW[v]=(k=0,key)=>{ k=+k||0; const e=withSeed(key||`${v}-${k}`,()=>raw(key?-1:k)); e.k=k; return e; };
+}
 VIEWS.qc = () => {
   const e=ex, idx=e.order[e.i], q=QC[idx];
-  if(!e.opt) e.opt=shuffle([0,1,2,3]);
+  if(!e.opt) e.opt=withSeed('opt-'+idx,()=>shuffle([0,1,2,3]));
   const id='qc-'+e.sec;
   const btns=e.opt.map((oi,pos)=>{ let c='choice'; if(e.pickd!==null){ if(oi===q.a) c+=' right'; else if(oi===e.pickd) c+=' wrong'; } return `<button class="${c}" data-qc="${oi}" ${e.pickd!==null?'disabled':''}><b>${'ABCD'[pos]}</b>${fmt(q.o[oi])}</button>`; }).join('');
   const title = game?`Quick question · ${PARTN[q.s]}`:e.sec==='all'?'Mixed quick check':`Quick check · ${PARTN[e.sec]}`;
@@ -637,15 +668,36 @@ VIEWS.qc = () => {
   <p class="prop">${fmt(q.q)}</p>
   <section class="step"><div class="choices one">${btns}</div>
     ${e.pickd!==null?fb(e.pickd===q.a, e.pickd===q.a?'Correct.':`The answer is ${'ABCD'[e.opt.indexOf(q.a)]}.`, ' '+fmt(q.e)):''}</section>
-  ${nextBtn(e.i+1<e.order.length?'Next question':'Start a new round')}`;
+  ${nextBtn('Next question')}`;
+};
+
+// ===== Finished a set =====
+let doneInfo=null;
+NEW.done = info => { doneInfo=info; return null; };
+VIEWS.done = () => {
+  const d=doneInfo, nm=d.v==='qc'?`Quick check · ${PARTN[d.sec]||'Mixed'}`:ACT_NAME[d.v];
+  return `${backHome}
+  <div class="game-hero"><div class="big-candy" aria-hidden="true">✓</div>
+    <h2>That’s all ${d.n}</h2>
+    <p>You finished <b>${nm}</b>. Go back to the sections for the next activity.</p></div>
+  <div class="actions center"><button class="btn" data-go="home">Back to all sections</button><button class="btn ghost" data-go="${d.v}" ${d.v==='qc'?`data-arg="${d.sec}"`:''}>Do these again</button></div>`;
 };
 
 // ===== Candy Challenge =====
 const ROUND=['qc','qc','qc','qc','name','read','sub','sub','cat','cat'];
 const PASS=0.75; // must get MORE than 75% right
+const GAME_MIN=10; // minutes on the clock
 const TYPE_NAME={qc:'Quick check',name:'Name the expression',read:'Read a formula',sub:'Substitution instances',cat:'Symbolize a sentence'};
 const CHEERS=['Nice!','Great job!','You got it!','Brilliant!','Way to go!','Nailed it!','Logic star!'];
-let game=null, lastGame=null;
+let game=null, lastGame=null, gameTimer=null;
+const left = () => Math.max(0, game.deadline-Date.now());
+const clock = ms => { const s=Math.ceil(ms/1000); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; };
+function gameTick(){
+  if(!game){ clearInterval(gameTimer); return; }
+  const ms=left(), el=document.getElementById('gclock');
+  if(el){ el.textContent='⏱ '+clock(ms); el.classList.toggle('low', ms<60000); }
+  if(ms<=0){ game.timeUp=true; finishGame(); }
+}
 function gameRecord(ok){
   if(!game||game.answered) return;
   game.answered=true; game.hist[game.i]=ok;
@@ -655,13 +707,14 @@ function gameBar(title){
   const g=game, n=g.items.length;
   const dots=g.items.map((_,k)=>`<i class="${k<g.i||(k===g.i&&g.answered)?(g.hist[k]?'hit':'miss'):k===g.i?'now':''}"></i>`).join('');
   const cheer = g.answered&&g.hist[g.i] ? `<span class="cheer">${g.cheer}${g.streak>=3?` ${g.streak} in a row!`:''}</span>` : '';
-  return `<div class="gbar"><div class="gbar-row"><span>🍬 Question ${g.i+1} of ${n}</span><span>${g.right} correct</span></div><div class="dots" aria-hidden="true">${dots}</div></div>
+  return `<div class="gbar"><div class="gbar-row"><span>🍬 Question ${g.i+1} of ${n}</span><span id="gclock" class="gclock${left()<60000?' low':''}">⏱ ${clock(left())}</span><span>${g.right} correct</span></div><div class="dots" aria-hidden="true">${dots}</div></div>
   <div class="ex-head"><h2>${title}</h2>${cheer}</div>`;
 }
 function startGame(){
   const name=(document.getElementById('player-name')?.value||'').trim();
   try{ localStorage.setItem('class11-name',name); }catch(e){}
-  game={items:shuffle(ROUND), i:-1, right:0, streak:0, answered:false, hist:[], usedQc:[], cheer:'', name};
+  game={items:withSeed('game-order',()=>shuffle(ROUND)), i:-1, right:0, streak:0, answered:false, hist:[], usedQc:[], cheer:'', name, deadline:Date.now()+GAME_MIN*60000};
+  clearInterval(gameTimer); gameTimer=setInterval(gameTick,500);
   gameNext();
 }
 function gameNext(){
@@ -669,12 +722,12 @@ function gameNext(){
   game.i++; game.answered=false; game.cheer='';
   if(game.i>=game.items.length){ finishGame(); return; }
   const type=game.items[game.i];
-  view=type; ex=NEW[type](type==='qc'?'all':undefined);
+  view=type; ex=type==='qc' ? withSeed('game-'+game.i,()=>NEW.qc('all')) : NEW[type](0,'game-'+game.i);
   if(type==='qc'){ const fresh=ex.order.filter(i=>!game.usedQc.includes(i)); ex.order=[fresh[0]]; game.usedQc.push(fresh[0]); }
   render(); window.scrollTo(0,0);
 }
 function finishGame(){
-  lastGame=game; game=null;
+  clearInterval(gameTimer); lastGame=game; game=null;
   lastGame.won = lastGame.right/lastGame.items.length > PASS;
   if(lastGame.won){ progress.candy=(progress.candy||0)+1; save(); playTada(); }
   view='gameEnd'; ex=null; render(); window.scrollTo(0,0);
@@ -695,13 +748,13 @@ VIEWS.gameStart = () => {
   return `${backHome}
   <div class="game-hero"><div class="big-candy" aria-hidden="true">🍬</div>
     <h2>Candy Challenge</h2>
-    <p>Ten questions from every part, mixed together. Get <b>8 or more right</b> (over 75%) and you earn candy.</p>
+    <p>Ten questions from every part, and <b>${GAME_MIN} minutes</b> on the clock. Get <b>8 or more right</b> (over 75%) and you earn candy.</p>
   </div>
   <section class="step">
     <label for="player-name"><h3>Your name</h3><span class="hint">So your teacher knows who earned the candy.</span></label>
     <input type="text" id="player-name" autocomplete="off" maxlength="40" placeholder="First and last name" value="${esc(nm)}">
     <div class="actions"><button class="btn big" data-act="start-game">Start the round</button></div>
-    <p class="hint">Only your first try on each question counts. You can skip a question, but a skip counts as a miss. Every round has new questions.</p>
+    <p class="hint">Only your first try on each question counts. You can skip a question, but a skip counts as a miss. When time runs out, the round ends and any question you didn’t get to counts as a miss. Everyone gets the same ten questions.</p>
   </section>`;
 };
 VIEWS.gameEnd = () => {
@@ -731,7 +784,7 @@ VIEWS.gameEnd = () => {
       <p class="eyebrow">Candy Challenge</p>
       <h1>${close?'So close':'Good effort'}${who}!</h1>
       <p class="final">${g.right} of ${n} right · ${pct}%</p>
-      <p>You need 8 of 10 for candy. Every round has new questions, so you can try again as many times as you like.</p>
+      <p>${g.timeUp?'Time ran out. ':''}You need 8 of 10 for candy. Look over the ones you missed, then try again.</p>
     </div>
     <div class="actions center"><button class="btn" data-act="replay">Try again</button><button class="btn ghost" data-go="home">Back to practice</button></div>
     ${practice}`;
@@ -743,7 +796,7 @@ app.addEventListener('click', ev=>{
   const act0=t.closest('[data-act]')?.dataset.act;
   if(act0==='start-game'){ startGame(); return; }
   if(act0==='replay'){ go('gameStart'); return; }
-  if(act0==='quit-game'){ game=null; go('home'); return; }
+  if(act0==='quit-game'){ clearInterval(gameTimer); game=null; go('home'); return; }
   if(act0==='next' && game){ gameNext(); return; }
   const goEl=t.closest('[data-go]'); if(goEl){ go(goEl.dataset.go, goEl.dataset.arg); return; }
   const d=k=>{ const el=t.closest(`[data-${k}]`); return el?el.dataset[k.replace(/-(.)/g,(_,c)=>c.toUpperCase())]:undefined; };
@@ -787,8 +840,9 @@ app.addEventListener('click', ev=>{
   }
   if(view==='qc' && (v=d('qc'))!==undefined && ex.pickd===null){ ex.pickd=+v; tally('qc-'+ex.sec, ex.pickd===QC[ex.order[ex.i]].a); render(); return; }
   if(t.closest('[data-act="next"]')){
-    if(view==='qc'){ if(ex.i+1<ex.order.length){ ex.i++; ex.opt=null; ex.pickd=null; render(); window.scrollTo(0,0); } else go('qc',ex.sec); return; }
-    go(view); return;
+    if(view==='qc'){ if(ex.i+1<ex.order.length){ ex.i++; ex.opt=null; ex.pickd=null; render(); window.scrollTo(0,0); } else go('done',{v:'qc',sec:ex.sec,n:ex.order.length}); return; }
+    if(ex.k+1<SET[view]) go(view, ex.k+1); else go('done',{v:view,n:SET[view]});
+    return;
   }
 });
 app.addEventListener('change', ev=>{
